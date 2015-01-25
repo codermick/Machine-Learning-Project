@@ -1,0 +1,52 @@
+
+###Introduction###
+
+Human Activity Recognition (HAR) is gaining momentum from individuals who want to use the information gathered to track exercise activity, among other reasons. In order to further research, data was collected on 6 individuals who performed various weight lifting exercises with accelerometers located on the individual in specific locations. The exercises were performed correctly and incorrectly in 5 different ways. The purpose of this assignment is to develop a model that will predict, based ont the accelerometer data, whether or not the exercise was done correctly, or which way it was done incorrectly.
+
+###Processing The Data###
+
+First, load the training set & remove columns that have NA, Blanks or #DIV/0 values
+
+
+```{r}
+pmltraining<-read.csv("pml-training.csv",na.strings=c("","NA","#DIV/0!"))
+pmltraining<-pmltraining[,colSums(is.na(pmltraining))==0]
+pmltraining<-pmltraining[,-c(1:7)]
+```
+
+Next, split training set into two datasets where we will have a training aset and a test set.
+
+```{r}
+library(caret)
+set.seed(614)
+inTrain<-createDataPartition(y=pmltraining$classe,p=0.7,list=FALSE)
+training<-pmltraining[inTrain,]
+test<-pmltraining[-inTrain,]
+```
+
+Next, use classification tree model to find accuracy of model.
+
+```{r}
+mFitRPart<-train(classe~.,method="rpart",data=training)
+```
+
+```{r}
+mFitRPartpredict<-predict(mFitRPart$finalModel,training, type = "class")
+confusionMatrix(mFitRPartpredict,training$classe)
+```
+Due to the low accuracy we try using random forrest
+
+```{r}
+mFitRF<-train(classe~.,method="rf",data=training,trControl=trainControl(method="cv",number = 5),prox=TRUE)
+```
+
+```{r}
+mFitRFpredict<-predict(mFitRF$finalModel,training, type="class")
+confusionMatrix(mFitRFpredict,training$classe)
+```
+
+###Accuracy###
+
+After using cross validation as the resampling method, the accuracy appears to be at 99.1% with a sample error rate of 0.9%
+
+
